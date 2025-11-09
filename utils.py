@@ -1,7 +1,8 @@
+import json
 import numpy as np
 from noise import pnoise2
 from numpy.typing import NDArray
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 
 
 @dataclass
@@ -15,6 +16,20 @@ class PerlinNoiseConfig:
     repeatx: float = 1024.0
     repeaty: float = 1024.0
     base: int = 0
+
+
+@dataclass
+class TerrainConfig:
+    XSize: int
+    YSize: int
+    Scale: float
+    ZMultiplier: float
+    UVScale: float
+    Heightmap: NDArray
+
+    def export_to_json(self, filename: str = "config.json") -> None:
+        with open(filename, "w") as file:
+            json.dump(asdict(self), file)
 
 
 def gaussian_2d(
