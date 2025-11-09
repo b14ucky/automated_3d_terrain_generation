@@ -6,6 +6,28 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "TerrainLoader.generated.h"
 
+USTRUCT(BlueprintType)
+struct FTerrainConfig {
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 XSize;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 YSize;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Scale;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float ZMultiplier;
+
+	UPROPERTY(EditAnywhere, BLueprintReadWrite)
+	float UVScale;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<float> Heightmap;
+};
 /**
  * 
  */
@@ -16,5 +38,6 @@ class AUTO3DGEN_API UTerrainLoader : public UBlueprintFunctionLibrary
 	
 public:
 	UFUNCTION(BlueprintCallable, Category = "Terrain")
-	static TArray<float> LoadHeightmap(int width, int height);
+	static bool LoadTerrainConfig(FTerrainConfig& OutConfig);
+	static FString ReadFile(FString FilePath);
 };

@@ -4,29 +4,33 @@
 #include "TerrainLoader.h"
 #include "Misc/Paths.h"
 #include "Misc/FileHelper.h"
+#include "JsonObjectConverter.h"
 
-TArray<float> UTerrainLoader::LoadHeightmap(int width, int height) 
+bool UTerrainLoader::LoadTerrainConfig(FTerrainConfig& OutConfig)
 {
-    TArray<FString> Lines;
-    FString Filename = "heightmap.csv";
+    FString Filename = "config.json";
     FString FilePath = FPaths::ProjectDir() + Filename;
-    FFileHelper::LoadFileToStringArray(Lines, *FilePath);
+    FString JsonString;
 
-    TArray<float> Heightmap;
-
-    // allocate memory for the array so Unreal
-    // does not have to relocate every now and then
-    Heightmap.Reserve(width * height);
-
-    for (FString& line : Lines) {
-        TArray<FString> Parts;
-        line.ParseIntoArray(Parts, TEXT(","));
-
-        for (FString& part : Parts) {
-            Heightmap.Add(FCString::Atof(*part));
-            UE_LOG(LogTemp, Warning, TEXT("Value: %f"), FCString::Atof(*part));
-        }
+    if (FFileHelper::LoadFileToString(JsonString, *FilePath)) {
+        return FJsonObjectConverter::JsonObjectStringToUStruct<FTerrainConfig>(JsonString, &OutConfig, 0, 0);
     }
 
-    return Heightmap;
+    UE_LOG(LogTemp, Error, TEXT("Config file not found: %s"), *FilePath);
+    return false;
+}
+
+FString UTerrainLoader::ReadFile(FString FilePath)
+{
+    if (!FPlatformFileManager::Get().GetPlatformFile().FileExists(*FilePath)) {
+        return "";
+    }
+
+    FString FileContent = "";
+
+    if (!FFileHelper::LoadFileToString(FileContent, *FilePath)) {
+        return "";
+    }
+
+    return FileContent;
 }
