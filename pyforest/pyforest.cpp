@@ -134,6 +134,17 @@ struct Forest {
         seeds.swap(kept);
     }
 
+    void remove_seeds() {
+        for (int x = 0; x < width; ++x) {
+            for (int y = 0; y < height; ++y) {
+                int id = idx(x, y);
+                if (map[id] == VegetationType::SEED) map[id] = VegetationType::EMPTY; 
+            }
+        }
+
+        seeds.clear();
+    }
+
     double get_coverage() const {
         // percent of width * height matrix covered in trees
         double denom = (double)map.size();
@@ -227,6 +238,11 @@ static PyObject* py_decay_seeds(PyObject*, PyObject*) {
     Py_RETURN_NONE;
 }
 
+static PyObject* py_remove_seeds(PyObject*, PyObject*) {
+    g_forest.remove_seeds();
+    Py_RETURN_NONE;
+}
+
 static PyObject* py_get_coverage(PyObject*, PyObject*) {
     double coverage = g_forest.get_coverage();
     return PyFloat_FromDouble(coverage);
@@ -249,6 +265,7 @@ static PyMethodDef ForestMethods[] = {
     {"seed_trees",  py_seed_trees, METH_NOARGS, "seed_trees()"},
     {"grow_trees",  py_grow_trees, METH_NOARGS, "grow_trees()"},
     {"decay_seeds", py_decay_seeds, METH_NOARGS, "decay_seeds()"},
+    {"remove_seeds", py_remove_seeds, METH_NOARGS, "remove_seeds()"},
     {"get_coverage", py_get_coverage, METH_NOARGS, "get_coverage() => float"},
     {"get_trees", py_get_trees, METH_NOARGS, "get_trees() => list[(x,y), ...]"},
     {"get_seeds", py_get_seeds, METH_NOARGS, "get_seeds() => list[(x,y,strength), ...]"},
