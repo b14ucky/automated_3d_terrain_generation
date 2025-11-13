@@ -41,7 +41,7 @@ class PyForestConfig:
     seed_radius: int = 15
     seed_strength: float = 0.05
     seed_decay_rate: float = 0.2
-    desired_coverage: float = 0.3
+    desired_coverage: float = 0.03
 
 
 def gaussian_2d(
