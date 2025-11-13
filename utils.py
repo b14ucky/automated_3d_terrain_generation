@@ -1,6 +1,7 @@
 import json
 import numpy as np
 from noise import pnoise2
+from pyforest import PyForest
 from numpy.typing import NDArray
 from dataclasses import dataclass, asdict
 
@@ -30,6 +31,17 @@ class TerrainConfig:
     def export_to_json(self, filename: str = "config.json") -> None:
         with open(filename, "w") as file:
             json.dump(asdict(self), file)
+
+
+@dataclass
+class PyForestConfig:
+    width: int
+    height: int
+    initial_trees: int = 3
+    seed_radius: int = 15
+    seed_strength: float = 0.05
+    seed_decay_rate: float = 0.2
+    desired_coverage: float = 0.3
 
 
 def gaussian_2d(
@@ -105,3 +117,54 @@ def generate_heightmap(
         return terrain * (terrain_amplifier + mask)
 
     return terrain
+
+
+def generate_forest_adapted_to_terrain(
+    config: PyForestConfig,
+    heightmap: NDArray,
+    min_height: float = 0.35,
+    max_height: float = 0.6,
+    max_slope: float = 0.7,
+) -> NDArray:
+    """
+    Generates a forest distribution using the PyForest module and adapts it to the given terrain.
+
+    The function initializes a PyForest simulation using the provided configuration,
+    generates a forest map, and filters vegetation based on the heightmap data.
+    Trees are removed from regions that exceed the allowed slope or fall outside
+    the specified height range. This results in a more natural forest layout that
+    matches the underlying terrain shape.
+
+    Args:
+        config (PyForestConfig): Configuration object for the PyForest generator.
+        heightmap (NDArray): 2D array representing the terrain height values.
+        min_height (float, optional): Minimum normalized height threshold below which trees are removed. Defaults to 0.35.
+        max_height (float, optional): Maximum normalized height threshold above which trees are removed. Defaults to 0.6.
+        max_slope (float, optional): Maximum normalized slope value allowed for tree placement. Defaults to 0.7.
+
+    Returns:
+        NDArray: A 2D array representing the filtered forest map, where cell values correspond to vegetation types:
+            - 0: EMPTY
+            - 1: SEED
+            - 2: TREE
+    """
+
+    forest = PyForest(
+        width=config.width,
+        height=config.height,
+        initial_trees=config.initial_trees,
+        seed_radius=config.seed_radius,
+        seed_strength=config.seed_strength,
+        desired_coverage=config.desired_coverage,
+    )
+
+    forest_map = forest.get_map()
+
+    dx, dy = np.gradient(heightmap)
+    slope = np.sqrt(dx**2 + dy**2)
+    slope = (slope - slope.min()) / (slope.max() - slope.min())
+
+    forest_map[
+        (slope > max_slope) | (heightmap > max_height) | (heightmap < min_height)
+    ] = 0
+    return forest_map
