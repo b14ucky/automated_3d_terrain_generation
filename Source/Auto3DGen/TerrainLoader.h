@@ -27,6 +27,9 @@ struct FTerrainConfig {
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<float> Heightmap;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<int32> VegetationMap;
 };
 /**
  * 

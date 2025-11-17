@@ -26,8 +26,9 @@ class TerrainConfig:
     Scale: float
     ZMultiplier: float
     UVScale: float
-    Heightmap: NDArray
-
+    Heightmap: list[float]
+    VegetationMap: list[int]
+    
     def export_to_json(self, filename: str = "config.json") -> None:
         with open(filename, "w") as file:
             json.dump(asdict(self), file)
