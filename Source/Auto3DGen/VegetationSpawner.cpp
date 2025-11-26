@@ -32,9 +32,10 @@ void AVegetationSpawner::SpawnVegetation(int32 XSize, int32 YSize, float Scale, 
 		for (int Y = 0; Y < YSize; ++Y) {
 			int index = Y * XSize + X;
 
-			if (VegetationMap[index] == 0) continue;
+			if (VegetationMap[index] != 2) continue;
 
 			float Z = Heightmap[index] * ZMultiplier;
+			Z -= 0.02f * ZMultiplier; // slight bury to avoid floating
 
 			FVector Position(X * Scale, Y * Scale, Z);
 
@@ -42,18 +43,6 @@ void AVegetationSpawner::SpawnVegetation(int32 XSize, int32 YSize, float Scale, 
 
 			float Scale = FMath::FRandRange(0.6f, 1.0f);
 			FVector RandomScale(Scale);
-
-			// TODO: Fix forest generation algorithm (add space of radius R between trees)
-			// to correctly place trees on uneven terrain
-			/*FVector Start(Position.X, Position.Y, 10'000.f);
-			FVector End(Position.X, Position.Y, 0.f);
-			FHitResult HitResult;
-
-			if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_WorldStatic)) {
-				FVector CorrectedPosition = HitResult.ImpactPoint;
-				FTransform InstanceTransform(RandomRotation, CorrectedPosition, RandomScale);
-				TreeISM->AddInstance(InstanceTransform);
-			}*/
 
 			FTransform InstanceTransform(RandomRotation, Position, RandomScale);
 			TreeISM->AddInstance(InstanceTransform);
