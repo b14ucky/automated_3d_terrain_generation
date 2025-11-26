@@ -1,11 +1,12 @@
 import numpy as np
-from enum import Enum
+from enum import IntEnum
 from pyforest import pyforest  # type: ignore
 import matplotlib.pyplot as plt
 from numpy.typing import NDArray
 
 
-class VegetationType(Enum):
+class VegetationType(IntEnum):
+    UNPLANTABLE = -1
     EMPTY = 0
     SEED = 1
     TREE = 2
@@ -33,6 +34,7 @@ class PyForest:
         seed_strength: float = 0.05,
         seed_decay_rate: float = 0.2,
         desired_coverage: float = 0.05,
+        space_between_trees: int = 5,
     ) -> None:
         """
         Initialize the forest simulation.
@@ -48,6 +50,7 @@ class PyForest:
             seed_strength (float, optional): Probability of a seed growing into a tree. Defaults to 0.05.
             seed_decay_rate (float, optional): Rate at which seed strength decays each step. Defaults to 0.2.
             desired_coverage (float, optional): Target coverage fraction (0-1). Defaults to 0.05.
+            space_between_trees (int, optional): Minimum spacing between trees. Defaults to 5.
         """
 
         pyforest.init_forest(
@@ -57,6 +60,7 @@ class PyForest:
             seed_radius,
             seed_strength,
             seed_decay_rate,
+            space_between_trees,
         )
 
         self._width = width
@@ -93,8 +97,8 @@ class PyForest:
 
         forest_map: NDArray = np.array(pyforest.get_map())
 
-        trees = forest_map == VegetationType.TREE.value
-        seeds = forest_map == VegetationType.SEED.value
+        trees = forest_map == VegetationType.TREE
+        seeds = forest_map == VegetationType.SEED
 
         y_trees, x_trees = np.where(trees)
         y_seeds, x_seeds = np.where(seeds)
@@ -119,7 +123,7 @@ class PyForest:
         Returns:
             NDArray: 2D NumPy array of integers representing the forest grid.
                      Values correspond to VegetationType Enum:
-                     0 = EMPTY, 1 = SEED, 2 = TREE
+                     -1 = UNPLANTABLE, 0 = EMPTY, 1 = SEED, 2 = TREE
         """
-        pyforest.remove_seeds()
+        pyforest.clear_map()
         return np.array(pyforest.get_map())

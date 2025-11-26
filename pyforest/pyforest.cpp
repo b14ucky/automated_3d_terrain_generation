@@ -25,7 +25,7 @@ struct Forest {
     int seed_radius = 15;
     double seed_strength = 0.05;
     double seed_decay_rate = 0.2;
-    int unplantable_radius = 5;
+    int space_between_trees = 5;
 
     std::vector<int> map;
     std::vector<Tree> trees;
@@ -38,18 +38,21 @@ struct Forest {
 
     inline int idx(int x, int y) const {return y * width + x;}
 
-    void init(int w,
+    void init(
+        int w,
         int h,
         int initial_trees,
         int seed_radius_,
         double seed_strength_,
-        double seed_decay_rate_
+        double seed_decay_rate_,
+        int space_between_trees_
     ) {
         width = w;
         height = h;
         seed_radius = seed_radius_;
         seed_strength = seed_strength_;
         seed_decay_rate = seed_decay_rate_;
+        space_between_trees = space_between_trees_;
 
         map.assign(width * height, VegetationType::EMPTY);
         trees.clear();
@@ -128,11 +131,11 @@ struct Forest {
         seeds.swap(kept);
     }
 
-    void remove_seeds() {
+    void clear_map() {
         for (int x = 0; x < width; ++x) {
             for (int y = 0; y < height; ++y) {
                 int id = idx(x, y);
-                if (map[id] == VegetationType::SEED) map[id] = VegetationType::EMPTY; 
+                if (map[id] == VegetationType::SEED || map[id] == VegetationType::UNPLANTABLE) map[id] = VegetationType::EMPTY; 
             }
         }
 
@@ -140,23 +143,23 @@ struct Forest {
     }
 
     void place_tree(int pos_x, int pos_y) {
-        for (int x = pos_x - unplantable_radius; x <= pos_x + unplantable_radius; ++x) {
+        for (int x = pos_x - space_between_trees; x <= pos_x + space_between_trees; ++x) {
             if (x < 0 || x >= width) continue;
 
-            for (int y = pos_y - unplantable_radius; y <= pos_y + unplantable_radius; ++y) {
+            for (int y = pos_y - space_between_trees; y <= pos_y + space_between_trees; ++y) {
                 if (y < 0 || y >= height || (x == pos_x && y == pos_y)) continue;
 
                 int dx = x - pos_x;
                 int dy = y - pos_y;
-                if (dx * dx + dy * dy > unplantable_radius * unplantable_radius) continue;
+                if (dx * dx + dy * dy > space_between_trees * space_between_trees) continue;
 
                 int id = idx(x, y);
                 map[id] = VegetationType::UNPLANTABLE;
             }
-
-            map[idx(pos_x, pos_y)] = VegetationType::TREE;
-            trees.push_back(Tree{pos_x, pos_y});
         }
+
+        map[idx(pos_x, pos_y)] = VegetationType::TREE;
+        trees.push_back(Tree{pos_x, pos_y});
     }
 
     double get_coverage() const {
@@ -209,9 +212,10 @@ static Forest g_forest;
 
 static PyObject* py_init_forest(PyObject*, PyObject* args, PyObject* kwargs) {
     int w, h, initial_trees = 5;
-    int seed_radius = 5;
+    int seed_radius = 15;
     double seed_strength = 0.05;
     double seed_decay_rate = 0.2;
+    int space_between_trees = 5;
 
     static const char *kwlist[] = {
         "width",
@@ -220,19 +224,17 @@ static PyObject* py_init_forest(PyObject*, PyObject* args, PyObject* kwargs) {
         "seed_radius",
         "seed_strength",
         "seed_decay_rate",
+        "space_between_trees",
         NULL,
     };
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "ii|iidd", (char**)kwlist,
-                                     &w, &h, &initial_trees, &seed_radius, &seed_strength, &seed_decay_rate)) {
-        PyErr_Clear();
-        if (!PyArg_ParseTuple(args, "iii", &w, &h, &initial_trees)) {
-            PyErr_SetString(PyExc_TypeError, "Expected (width:int, height:int, initial_trees:int[, seed_radius:int, seed_strength:float, seed_decay_rate:float])");
-            return NULL;
-        }
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "ii|iiddi", (char**)kwlist,
+                                     &w, &h, &initial_trees, &seed_radius, &seed_strength, &seed_decay_rate, &space_between_trees)) {
+        PyErr_Print();
+        return NULL;
     }
 
-    g_forest.init(w, h, initial_trees, seed_radius, seed_strength, seed_decay_rate);
+    g_forest.init(w, h, initial_trees, seed_radius, seed_strength, seed_decay_rate, space_between_trees);
 
     Py_RETURN_NONE;
 }
@@ -252,8 +254,8 @@ static PyObject* py_decay_seeds(PyObject*, PyObject*) {
     Py_RETURN_NONE;
 }
 
-static PyObject* py_remove_seeds(PyObject*, PyObject*) {
-    g_forest.remove_seeds();
+static PyObject* py_clear_map(PyObject*, PyObject*) {
+    g_forest.clear_map();
     Py_RETURN_NONE;
 }
 
@@ -275,11 +277,11 @@ static PyObject* py_get_map(PyObject*, PyObject*) {
 }
 
 static PyMethodDef ForestMethods[] = {
-    {"init_forest", (PyCFunction)py_init_forest, METH_VARARGS | METH_KEYWORDS, "init_forest(width, height, initial_trees, seed_radius=5, seed_strength=0.05, seed_decay_rate=0.2, desired_coverage=0.15)"},
+    {"init_forest", (PyCFunction)py_init_forest, METH_VARARGS | METH_KEYWORDS, "init_forest(width, height, initial_trees, seed_radius=5, seed_strength=0.05, seed_decay_rate=0.2, space_between_trees=5)"},
     {"seed_trees",  py_seed_trees, METH_NOARGS, "seed_trees()"},
     {"grow_trees",  py_grow_trees, METH_NOARGS, "grow_trees()"},
     {"decay_seeds", py_decay_seeds, METH_NOARGS, "decay_seeds()"},
-    {"remove_seeds", py_remove_seeds, METH_NOARGS, "remove_seeds()"},
+    {"clear_map", py_clear_map, METH_NOARGS, "clear_map()"},
     {"get_coverage", py_get_coverage, METH_NOARGS, "get_coverage() => float"},
     {"get_trees", py_get_trees, METH_NOARGS, "get_trees() => list[(x,y), ...]"},
     {"get_seeds", py_get_seeds, METH_NOARGS, "get_seeds() => list[(x,y,strength), ...]"},

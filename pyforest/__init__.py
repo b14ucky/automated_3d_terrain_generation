@@ -1,1 +1,1 @@
-from .cpp_module_wrapper import PyForest
+from .cpp_module_wrapper import PyForest, VegetationType

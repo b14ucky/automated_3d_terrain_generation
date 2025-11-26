@@ -1,7 +1,7 @@
 import json
 import numpy as np
 from noise import pnoise2
-from pyforest import PyForest
+from pyforest import PyForest, VegetationType
 from numpy.typing import NDArray
 from dataclasses import dataclass, asdict
 
@@ -28,7 +28,7 @@ class TerrainConfig:
     UVScale: float
     Heightmap: list[float]
     VegetationMap: list[int]
-    
+
     def export_to_json(self, filename: str = "config.json") -> None:
         with open(filename, "w") as file:
             json.dump(asdict(self), file)
@@ -43,6 +43,7 @@ class PyForestConfig:
     seed_strength: float = 0.05
     seed_decay_rate: float = 0.2
     desired_coverage: float = 0.03
+    space_between_trees: int = 5
 
 
 def gaussian_2d(
@@ -145,6 +146,7 @@ def generate_forest_adapted_to_terrain(
 
     Returns:
         NDArray: A 2D array representing the filtered forest map, where cell values correspond to vegetation types:
+            - -1: UNPLANTABLE
             - 0: EMPTY
             - 1: SEED
             - 2: TREE
@@ -157,6 +159,7 @@ def generate_forest_adapted_to_terrain(
         seed_radius=config.seed_radius,
         seed_strength=config.seed_strength,
         desired_coverage=config.desired_coverage,
+        space_between_trees=config.space_between_trees,
     )
 
     forest_map = forest.get_map()
@@ -167,5 +170,5 @@ def generate_forest_adapted_to_terrain(
 
     forest_map[
         (slope > max_slope) | (heightmap > max_height) | (heightmap < min_height)
-    ] = 0
+    ] = VegetationType.EMPTY
     return forest_map
