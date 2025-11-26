@@ -4,6 +4,7 @@
 #include <random>
 
 enum VegetationType {
+    UNPLANTABLE = -1,
     EMPTY = 0,
     SEED = 1,
     TREE = 2
@@ -21,9 +22,10 @@ struct Tree {
 struct Forest {
     int width = 0;
     int height = 0;
-    int seed_radius = 5;
+    int seed_radius = 15;
     double seed_strength = 0.05;
     double seed_decay_rate = 0.2;
+    int unplantable_radius = 5;
 
     std::vector<int> map;
     std::vector<Tree> trees;
@@ -60,8 +62,7 @@ struct Forest {
             int x = dx(rng);
             int y = dy(rng);
             if (map[idx(x, y)] != VegetationType::TREE) {
-                map[idx(x, y)] = VegetationType::TREE;
-                trees.push_back(Tree{x, y});
+                place_tree(x, y);
             }
         }
     }
@@ -76,21 +77,15 @@ struct Forest {
 
                     int dx = x - tree.x;
                     int dy = y - tree.y;
-                    if (dx * dx + dy * dy > seed_radius * seed_radius) continue;
-                    if (map[idx(x, y)] == VegetationType::TREE) continue;
-
                     int id = idx(x, y);
-                    if (map[id] == VegetationType::SEED) {
-                        // TODO: test what gives better forests - increasing seed's strength or not
-                        // probably not increasing its strength is better
-                        // for (auto &seed : seeds) {
-                        //     if (seed.x == x && seed.y == y) {seed.strength += seed_strength; break;}
-                        // }
-                    } else {
-                        Seed seed{x, y, seed_strength};
-                        seeds.push_back(seed);
-                        map[id] = VegetationType::SEED;
-                    }
+
+                    if (dx * dx + dy * dy > seed_radius * seed_radius) continue;
+                    if (map[id] == VegetationType::TREE) continue;
+                    if (map[id] == VegetationType::UNPLANTABLE) continue;
+
+                    Seed seed{x, y, seed_strength};
+                    seeds.push_back(seed);
+                    map[id] = VegetationType::SEED;
                 }
             }
         }
@@ -104,8 +99,7 @@ struct Forest {
             if (r < seed.strength) {
                 // becomes tree
                 if (map[idx(seed.x, seed.y)] != VegetationType::TREE) {
-                    map[idx(seed.x, seed.y)] = VegetationType::TREE;
-                    trees.push_back(Tree{seed.x, seed.y});
+                    place_tree(seed.x, seed.y);
                 }
 
                 // remove seed by swapping with last and pop_back because it is faster
@@ -143,6 +137,26 @@ struct Forest {
         }
 
         seeds.clear();
+    }
+
+    void place_tree(int pos_x, int pos_y) {
+        for (int x = pos_x - unplantable_radius; x <= pos_x + unplantable_radius; ++x) {
+            if (x < 0 || x >= width) continue;
+
+            for (int y = pos_y - unplantable_radius; y <= pos_y + unplantable_radius; ++y) {
+                if (y < 0 || y >= height || (x == pos_x && y == pos_y)) continue;
+
+                int dx = x - pos_x;
+                int dy = y - pos_y;
+                if (dx * dx + dy * dy > unplantable_radius * unplantable_radius) continue;
+
+                int id = idx(x, y);
+                map[id] = VegetationType::UNPLANTABLE;
+            }
+
+            map[idx(pos_x, pos_y)] = VegetationType::TREE;
+            trees.push_back(Tree{pos_x, pos_y});
+        }
     }
 
     double get_coverage() const {
