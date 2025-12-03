@@ -162,13 +162,6 @@ struct Forest {
         trees.push_back(Tree{pos_x, pos_y});
     }
 
-    double get_coverage() const {
-        // percent of width * height matrix covered in trees
-        double denom = (double)map.size();
-        if (denom == 0.0) return 0.0;
-        return (double)trees.size() / denom;
-    }
-
     PyObject* get_trees_py() const {
         PyObject* list = PyList_New((Py_ssize_t)trees.size());
         for (size_t i = 0; i < trees.size(); ++i) {
@@ -259,11 +252,6 @@ static PyObject* py_clear_map(PyObject*, PyObject*) {
     Py_RETURN_NONE;
 }
 
-static PyObject* py_get_coverage(PyObject*, PyObject*) {
-    double coverage = g_forest.get_coverage();
-    return PyFloat_FromDouble(coverage);
-}
-
 static PyObject* py_get_trees(PyObject*, PyObject*) {
     return g_forest.get_trees_py();
 }
@@ -282,7 +270,6 @@ static PyMethodDef ForestMethods[] = {
     {"grow_trees",  py_grow_trees, METH_NOARGS, "grow_trees()"},
     {"decay_seeds", py_decay_seeds, METH_NOARGS, "decay_seeds()"},
     {"clear_map", py_clear_map, METH_NOARGS, "clear_map()"},
-    {"get_coverage", py_get_coverage, METH_NOARGS, "get_coverage() => float"},
     {"get_trees", py_get_trees, METH_NOARGS, "get_trees() => list[(x,y), ...]"},
     {"get_seeds", py_get_seeds, METH_NOARGS, "get_seeds() => list[(x,y,strength), ...]"},
     {"get_map", py_get_map, METH_NOARGS, "get_map() => list[list[int]] rows"},

@@ -16,13 +16,15 @@ class PyForest:
     """
     Python wrapper around the C++ pyforest module for forest generation.
 
-    This class encapsulates the simulation of trees and seeds, handling
-    seeding, growth, decay, and visualization in a Python-friendly interface.
+    This class provides a Python-friendly interface for running the forest
+    simulation implemented in the C++ backend. The simulation consists of
+    repeatedly seeding trees, growing seeds into trees, and decaying seeds,
+    over a fixed number of iterations.
 
     Attributes:
         _width (int): Width of the forest.
         _height (int): Height of the forest.
-        _desired_coverage (float): Target fraction of the forest to be covered by trees.
+        _n_iterations (int): Number of simulation iterations (seed–grow–decay cycles).
     """
 
     def __init__(
@@ -33,24 +35,26 @@ class PyForest:
         seed_radius: int = 15,
         seed_strength: float = 0.05,
         seed_decay_rate: float = 0.2,
-        desired_coverage: float = 0.05,
+        n_iterations: int = 3,
         space_between_trees: int = 5,
     ) -> None:
         """
         Initialize the forest simulation.
 
-        This initializes the C++ pyforest backend with the specified parameters
-        and runs the simulation until the desired coverage is reached.
+        This initializes the C++ pyforest backend with the given parameters
+        and executes a fixed number of simulation iterations. Each iteration
+        performs: seeding around existing trees, growth of seeds into trees
+        based on their strength, and decay of remaining seeds.
 
         Args:
             width (int): Width of the forest grid.
             height (int): Height of the forest grid.
-            initial_trees (int, optional): Number of initial trees. Defaults to 5.
-            seed_radius (int, optional): Radius around trees to generate seeds. Defaults to 15.
-            seed_strength (float, optional): Probability of a seed growing into a tree. Defaults to 0.05.
-            seed_decay_rate (float, optional): Rate at which seed strength decays each step. Defaults to 0.2.
-            desired_coverage (float, optional): Target coverage fraction (0-1). Defaults to 0.05.
-            space_between_trees (int, optional): Minimum spacing between trees. Defaults to 5.
+            initial_trees (int, optional): Number of initial trees to place randomly. Defaults to 5.
+            seed_radius (int, optional): Maximum distance around a tree where seeds may spawn. Defaults to 15.
+            seed_strength (float, optional): Initial probability of a seed growing into a tree. Defaults to 0.05.
+            seed_decay_rate (float, optional): Fraction of seed strength lost per iteration. Defaults to 0.2.
+            n_iterations (int, optional): Number of simulation cycles to run. Defaults to 3.
+            space_between_trees (int, optional): Minimum distance between tree centers. Defaults to 5.
         """
 
         pyforest.init_forest(
@@ -65,19 +69,23 @@ class PyForest:
 
         self._width = width
         self._height = height
-        self._desired_coverage = desired_coverage
+        self._n_iterations = n_iterations
 
         self._generate()
 
     def _generate(self) -> None:
         """
-        Run the simulation until the desired coverage is reached.
+        Run the forest simulation for the configured number of iterations.
 
-        This repeatedly seeds trees, grows seeds into trees, and decays seeds
-        until the target coverage fraction is achieved.
+        Each iteration performs:
+        - Seeding around existing trees
+        - Growing seeds into trees with probability proportional to seed strength
+        - Decaying remaining seeds
+
+        The simulation stops after the fixed iteration count.
         """
 
-        while pyforest.get_coverage() < self._desired_coverage:
+        for _ in range(self._n_iterations):
             pyforest.seed_trees()
             pyforest.grow_trees()
             pyforest.decay_seeds()
