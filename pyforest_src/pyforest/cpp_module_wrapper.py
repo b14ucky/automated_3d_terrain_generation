@@ -1,6 +1,6 @@
 import numpy as np
 from enum import IntEnum
-import pyforest
+from pyforest import pyforest  # type: ignore
 import matplotlib.pyplot as plt
 from numpy.typing import NDArray
 
@@ -53,7 +53,7 @@ class PyForest:
             space_between_trees (int, optional): Minimum spacing between trees. Defaults to 5.
         """
 
-        pyforest.init_forest(  # type: ignore
+        pyforest.init_forest(
             width,
             height,
             initial_trees,
@@ -77,10 +77,10 @@ class PyForest:
         until the target coverage fraction is achieved.
         """
 
-        while pyforest.get_coverage() < self._desired_coverage:  # type: ignore
-            pyforest.seed_trees()  # type: ignore
-            pyforest.grow_trees()  # type: ignore
-            pyforest.decay_seeds()  # type: ignore
+        while pyforest.get_coverage() < self._desired_coverage:
+            pyforest.seed_trees()
+            pyforest.grow_trees()
+            pyforest.decay_seeds()
 
     def display_forest(self, plot_seeds: bool = False) -> None:
         """
@@ -95,7 +95,7 @@ class PyForest:
         - Coverage fraction in the title
         """
 
-        forest_map: NDArray = np.array(pyforest.get_map())  # type: ignore
+        forest_map: NDArray = np.array(pyforest.get_map())
 
         trees = forest_map == VegetationType.TREE
         seeds = forest_map == VegetationType.SEED
@@ -104,7 +104,7 @@ class PyForest:
         y_seeds, x_seeds = np.where(seeds)
 
         plt.figure(figsize=(5, 5))
-        plt.suptitle(f"Coverage: {pyforest.get_coverage():.2f}")  # type: ignore
+        plt.suptitle(f"Coverage: {pyforest.get_coverage():.2f}")
         if plot_seeds:
             plt.scatter(x_seeds, y_seeds, marker=".", color="brown")
         plt.scatter(x_trees, y_trees, marker="^", color="green")
@@ -125,5 +125,5 @@ class PyForest:
                      Values correspond to VegetationType Enum:
                      -1 = UNPLANTABLE, 0 = EMPTY, 1 = SEED, 2 = TREE
         """
-        pyforest.clear_map()  # type: ignore
-        return np.array(pyforest.get_map())  # type: ignore
+        pyforest.clear_map()
+        return np.array(pyforest.get_map())
