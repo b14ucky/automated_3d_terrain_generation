@@ -46,6 +46,14 @@ class PyForestConfig:
     space_between_trees: int = 5
 
 
+@dataclass
+class Mountain:
+    x: int
+    y: int
+    sigma: float
+    amplitude: float = 1.0
+
+
 def gaussian_2d(
     shape: tuple[int, int],
     center: tuple[int, int],
@@ -73,7 +81,7 @@ def gaussian_2d(
 
 def generate_heightmap(
     config: PerlinNoiseConfig,
-    mountains: list[tuple[int, int, float, float]] | None = None,
+    mountains: list[Mountain] | None = None,
     terrain_amplifier: float = 0.5,
 ) -> NDArray:
     """
@@ -81,7 +89,7 @@ def generate_heightmap(
 
     Args:
         config (PerlinNoiseConfig): Configuration object containing Perlin noise parameters.
-        mountains (list of tuples, optional): List of mountain parameters (y, x, sigma, amplitude) to modify the terrain.
+        mountains (list[Mountain], optional): List of Mountain objects used to modify the terrain.
         terrain_amplifier (float, optional): Amplification factor for the terrain. Default is 0.5.
 
     Returns:
@@ -92,9 +100,12 @@ def generate_heightmap(
 
     if mountains:
         mask = np.zeros((config.height, config.width))
-        for y, x, sigma, amp in mountains:
+        for mountain in mountains:
             mask += gaussian_2d(
-                (config.height, config.width), (y, x), sigma, amplitude=amp
+                (config.height, config.width),
+                (mountain.y, mountain.x),
+                mountain.sigma,
+                amplitude=mountain.amplitude,
             )
 
         mask = (mask - mask.min()) / (mask.max() - mask.min())
