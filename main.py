@@ -67,31 +67,81 @@ with right:
     st.divider()
     st.write("Mountains")
 
-    mountains: list[Mountain] = []
+    col_n, col_sel = st.columns([2, 1])
 
-    mountain_num = st.number_input("Number of mountains:", min_value=0)
-    for i in range(mountain_num):
-        with st.expander(f"#{i + 1}"):
-            x = st.slider("X:", min_value=0, max_value=width, key=f"x_mountain{i}")
-            y = st.slider("Y:", min_value=0, max_value=height, key=f"y_mountain{i}")
-            sigma = st.slider(
-                "Sigma:", min_value=0.01, max_value=500.0, key=f"s_mountain{i}"
-            )
-            amplitude = st.slider(
-                "Amplitude:",
-                min_value=0.01,
-                max_value=2.0,
-                key=f"a_mountain{i}",
-                value=1.0,
-            )
-            mountains.append(
-                Mountain(
-                    x=x,
-                    y=y,
-                    sigma=sigma,
-                    amplitude=amplitude,
-                )
-            )
+    with col_n:
+        mountain_num = st.number_input("Number of mountains:", min_value=0, step=1)
+
+    if "mountain_state" not in st.session_state:
+        st.session_state.mountain_state = []
+
+    while len(st.session_state.mountain_state) < mountain_num:
+        st.session_state.mountain_state.append(
+            {
+                "x": width // 2,
+                "y": height // 2,
+                "sigma": 10.0,
+                "amplitude": 1.0,
+            }
+        )
+
+    if len(st.session_state.mountain_state) > mountain_num:
+        st.session_state.mountain_state = st.session_state.mountain_state[
+            :mountain_num
+        ]
+
+    with col_sel:
+        active_idx = st.selectbox(
+            "Edit mountain:",
+            options=list(range(mountain_num)),
+            format_func=lambda i: f"#{i + 1}",
+            key="active_mountain_idx",
+            placeholder="Choose a mountain",
+        )
+
+    if active_idx is not None:
+
+        mountain = st.session_state.mountain_state[active_idx]
+
+        x = st.slider(
+            "X:",
+            min_value=0,
+            max_value=width,
+            value=mountain["x"],
+            key=f"x_mountain{active_idx}",
+        )
+        y = st.slider(
+            "Y:",
+            min_value=0,
+            max_value=height,
+            value=mountain["y"],
+            key=f"y_mountain{active_idx}",
+        )
+        sigma = st.slider(
+            "Sigma:",
+            min_value=0.01,
+            max_value=500.0,
+            value=mountain["sigma"],
+            key=f"s_mountain{active_idx}",
+        )
+        amplitude = st.slider(
+            "Amplitude:",
+            min_value=0.01,
+            max_value=2.0,
+            value=mountain["amplitude"],
+            key=f"a_mountain{active_idx}",
+        )
+
+        mountain["x"] = x
+        mountain["y"] = y
+        mountain["sigma"] = sigma
+        mountain["amplitude"] = amplitude
+
+    mountains = (
+        [Mountain(**m) for m in st.session_state.mountain_state]
+        if "mountain_state" in st.session_state
+        else None
+    )
 
 
 with left:
