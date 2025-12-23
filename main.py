@@ -1,6 +1,7 @@
 import numpy as np
 import streamlit as st
-import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+from PIL import Image, ImageDraw
 from pyforest import VegetationType
 from utils import (
     Mountain,
@@ -239,12 +240,20 @@ with left:
             config=forest_config, heightmap=heightmap
         )
 
-    trees = forest_map == VegetationType.TREE
+    colored_map = cm.terrain(heightmap)  # type: ignore
+    img_array = (colored_map[:, :, :3] * 255).astype("uint8")
+    image = Image.fromarray(img_array)
+    draw = ImageDraw.Draw(image)
 
-    y_trees, x_trees = np.where(trees)
+    y_trees, x_trees = np.where(forest_map == VegetationType.TREE)
 
-    fig = plt.figure(figsize=(9, 9), frameon=False)
-    plt.imshow(heightmap, cmap="terrain")
-    plt.scatter(x_trees, y_trees, color="green", marker="^", s=150)
-    plt.axis("off")
-    st.pyplot(fig)
+    tree_size = 4
+    for x, y in zip(x_trees, y_trees):
+        coords = [
+            (x, y - tree_size),
+            (x - tree_size, y + tree_size),
+            (x + tree_size, y + tree_size),
+        ]
+        draw.polygon(coords, fill="green", outline="darkgreen")
+
+    st.image(image, use_container_width=True)
