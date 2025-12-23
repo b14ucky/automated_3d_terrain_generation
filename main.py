@@ -21,7 +21,7 @@ st.markdown(
     /* lewa kolumna */
     div[data-testid="stColumn"]:first-child {
         position: sticky;
-        top: 1rem;
+        top: 6rem;
         height: fit-content;
     }
     </style>
@@ -256,4 +256,4 @@ with left:
         ]
         draw.polygon(coords, fill="green", outline="darkgreen")
 
-    st.image(image, use_container_width=True)
+    st.image(image, caption="Terrain Preview", use_container_width=True)
