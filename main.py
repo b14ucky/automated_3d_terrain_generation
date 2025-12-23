@@ -117,39 +117,50 @@ with right:
 
         mountain = st.session_state.mountain_state[active_idx]
 
-        x = st.slider(
+        def update_mountain_state(idx, param_name, widget_key):
+            st.session_state.mountain_state[idx][param_name] = st.session_state[
+                widget_key
+            ]
+
+        st.slider(
             "X:",
             min_value=0,
             max_value=width,
             value=mountain["x"],
             key=f"x_mountain{active_idx}",
+            on_change=update_mountain_state,
+            args=(active_idx, "x", f"x_mountain{active_idx}"),
         )
-        y = st.slider(
+
+        st.slider(
             "Y:",
             min_value=0,
             max_value=height,
             value=mountain["y"],
             key=f"y_mountain{active_idx}",
+            on_change=update_mountain_state,
+            args=(active_idx, "y", f"y_mountain{active_idx}"),
         )
-        sigma = st.slider(
+
+        st.slider(
             "Sigma:",
             min_value=0.01,
             max_value=500.0,
             value=mountain["sigma"],
             key=f"s_mountain{active_idx}",
+            on_change=update_mountain_state,
+            args=(active_idx, "sigma", f"s_mountain{active_idx}"),
         )
-        amplitude = st.slider(
+
+        st.slider(
             "Amplitude:",
             min_value=0.01,
             max_value=2.0,
             value=mountain["amplitude"],
             key=f"a_mountain{active_idx}",
+            on_change=update_mountain_state,
+            args=(active_idx, "amplitude", f"a_mountain{active_idx}"),
         )
-
-        mountain["x"] = x
-        mountain["y"] = y
-        mountain["sigma"] = sigma
-        mountain["amplitude"] = amplitude
 
     mountains = (
         [Mountain(**m) for m in st.session_state.mountain_state]
@@ -164,6 +175,6 @@ with left:
             config=config, mountains=mountains, terrain_amplifier=0.7
         )
 
-    fig = plt.figure(figsize=(15, 15), frameon=False)
+    fig = plt.figure(figsize=(9, 9), frameon=False)
     plt.imshow(heightmap, cmap="terrain")
     st.pyplot(fig)
