@@ -5,6 +5,7 @@ from PIL import Image, ImageDraw
 from pyforest import VegetationType
 from utils import (
     Mountain,
+    TerrainConfig,
     PyForestConfig,
     PerlinNoiseConfig,
     generate_heightmap,
@@ -256,7 +257,23 @@ with left:
         ]
         draw.polygon(coords, fill="green", outline="darkgreen")
 
-    st.image(image, caption="Terrain Preview", use_container_width=True)
+    st.image(image, caption="Terrain Preview", width="stretch")
     with st.container(horizontal_alignment="center"):
-        if st.button("Refresh"):
-            st.rerun()
+        col_left, col_right = st.columns(2)
+        with col_left:
+            if st.button("Refresh", width="stretch"):
+                pass
+
+        with col_right:
+            if st.button("Export to Unreal", width="stretch"):
+                TerrainConfig(
+                    XSize=width,
+                    YSize=height,
+                    Scale=100.0,
+                    ZMultiplier=7000.0,
+                    UVScale=1.0,
+                    Heightmap=heightmap.tolist(),
+                    VegetationMap=forest_map.tolist(),
+                ).export_to_json("config.json")
+
+                # TODO: run executable here
