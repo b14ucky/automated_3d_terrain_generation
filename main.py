@@ -257,3 +257,6 @@ with left:
         draw.polygon(coords, fill="green", outline="darkgreen")
 
     st.image(image, caption="Terrain Preview", use_container_width=True)
+    with st.container(horizontal_alignment="center"):
+        if st.button("Refresh"):
+            st.rerun()
