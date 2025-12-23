@@ -42,7 +42,7 @@ class PyForestConfig:
     seed_radius: int = 15
     seed_strength: float = 0.05
     seed_decay_rate: float = 0.2
-    desired_coverage: float = 0.03
+    n_iterations: int = 3
     space_between_trees: int = 5
 
 
@@ -158,7 +158,7 @@ def generate_forest_adapted_to_terrain(
         initial_trees=config.initial_trees,
         seed_radius=config.seed_radius,
         seed_strength=config.seed_strength,
-        desired_coverage=config.desired_coverage,
+        n_iterations=config.n_iterations,
         space_between_trees=config.space_between_trees,
     )
 
