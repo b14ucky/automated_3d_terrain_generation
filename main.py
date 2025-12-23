@@ -1,6 +1,14 @@
+import numpy as np
 import streamlit as st
 import matplotlib.pyplot as plt
-from utils import PerlinNoiseConfig, generate_heightmap, Mountain
+from pyforest import VegetationType
+from utils import (
+    Mountain,
+    PyForestConfig,
+    PerlinNoiseConfig,
+    generate_heightmap,
+    generate_forest_adapted_to_terrain,
+)
 
 
 st.set_page_config(layout="wide")
@@ -168,13 +176,75 @@ with right:
         else None
     )
 
+    # forest settings section
+    st.divider()
+    st.write("Forest settings")
+
+    trees_left, trees_rigth = st.columns(2)
+
+    with trees_left:
+        initial_trees = st.number_input(
+            "Number of initial trees:",
+            min_value=0,
+            value=3,
+        )
+        space_between_trees = st.number_input(
+            "Space between trees:",
+            min_value=5,
+        )
+        n_iterations = st.number_input(
+            "Number of iterations:",
+            min_value=1,
+            value=3,
+        )
+
+    with trees_rigth:
+        seed_radius = st.number_input(
+            "Seeding radius:",
+            min_value=0,
+            value=15,
+        )
+        seed_strength = st.number_input(
+            "Seed strength:",
+            min_value=0.00,
+            max_value=1.00,
+            value=0.05,
+            step=0.01,
+        )
+        seed_decay_rate = st.number_input(
+            "Seed decay rate:",
+            min_value=0.00,
+            max_value=1.00,
+            value=0.2,
+            step=0.01,
+        )
+
+    forest_config = PyForestConfig(
+        width=width,
+        height=height,
+        initial_trees=initial_trees,
+        seed_radius=seed_radius,
+        seed_strength=seed_strength,
+        seed_decay_rate=seed_decay_rate,
+        n_iterations=n_iterations,
+        space_between_trees=space_between_trees,
+    )
 
 with left:
     with st.spinner("Generating..."):
         heightmap = generate_heightmap(
             config=config, mountains=mountains, terrain_amplifier=0.7
         )
+        forest_map = generate_forest_adapted_to_terrain(
+            config=forest_config, heightmap=heightmap
+        )
+
+    trees = forest_map == VegetationType.TREE
+
+    y_trees, x_trees = np.where(trees)
 
     fig = plt.figure(figsize=(9, 9), frameon=False)
     plt.imshow(heightmap, cmap="terrain")
+    plt.scatter(x_trees, y_trees, color="green", marker="^", s=150)
+    plt.axis("off")
     st.pyplot(fig)
