@@ -6,6 +6,20 @@ from utils import PerlinNoiseConfig, generate_heightmap, Mountain
 st.set_page_config(layout="wide")
 left, right = st.columns([1, 2])
 
+st.markdown(
+    """
+    <style>
+    /* lewa kolumna */
+    div[data-testid="stColumn"]:first-child {
+        position: sticky;
+        top: 1rem;
+        height: fit-content;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 with right:
 
     # basic setting section
