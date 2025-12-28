@@ -9,6 +9,7 @@ from utils import (
     PyForestConfig,
     PerlinNoiseConfig,
     generate_heightmap,
+    resolve_config_path,
     generate_forest_adapted_to_terrain,
 )
 
@@ -266,6 +267,9 @@ with left:
 
         with col_right:
             if st.button("Export to Unreal", width="stretch"):
+                config_path = resolve_config_path()
+                print(config_path)
+
                 TerrainConfig(
                     XSize=width,
                     YSize=height,

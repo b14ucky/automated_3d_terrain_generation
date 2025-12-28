@@ -1,5 +1,6 @@
 import json
 import numpy as np
+from pathlib import Path
 from noise import pnoise2
 from pyforest import PyForest, VegetationType
 from numpy.typing import NDArray
@@ -183,3 +184,29 @@ def generate_forest_adapted_to_terrain(
         (slope > max_slope) | (heightmap > max_height) | (heightmap < min_height)
     ] = VegetationType.EMPTY
     return forest_map
+
+
+def resolve_config_path() -> Path:
+    """
+    Return the path to config.json based on whether the script is run from a
+    project directory (.uproject present) or an executable directory (.exe present).
+    """
+
+    base_dir = Path(__file__).resolve().parent
+
+    uprojects = list(base_dir.glob("*.uproject"))
+
+    if uprojects:
+        project_dir = base_dir
+
+        return project_dir / "config.json"
+
+    exes = list(base_dir.glob("*.exe"))
+    if exes:
+        exe_path = exes[0]
+        project_name = exe_path.stem
+        project_dir = base_dir / project_name
+
+        return project_dir / "config.json"
+
+    raise RuntimeError(f".uproject nor .exe not found in {base_dir}")
