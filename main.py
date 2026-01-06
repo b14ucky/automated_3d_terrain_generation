@@ -15,7 +15,7 @@ from utils import (
 )
 
 
-st.set_page_config(layout="wide")
+st.set_page_config(page_title="Auto 3D Terrain Generator", layout="wide")
 left, right = st.columns([1, 2])
 
 st.markdown(
