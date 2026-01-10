@@ -1,3 +1,4 @@
+import subprocess
 import numpy as np
 import streamlit as st
 import matplotlib.cm as cm
@@ -5,22 +6,21 @@ from PIL import Image, ImageDraw
 from pyforest import VegetationType
 from utils import (
     Mountain,
+    resolve_paths,
     TerrainConfig,
     PyForestConfig,
     PerlinNoiseConfig,
     generate_heightmap,
-    resolve_config_path,
     generate_forest_adapted_to_terrain,
 )
 
 
-st.set_page_config(layout="wide")
+st.set_page_config(page_title="Auto 3D Terrain Generator", layout="wide")
 left, right = st.columns([1, 2])
 
 st.markdown(
     """
     <style>
-    /* lewa kolumna */
     div[data-testid="stColumn"]:first-child {
         position: sticky;
         top: 6rem;
@@ -267,8 +267,7 @@ with left:
 
         with col_right:
             if st.button("Export to Unreal", width="stretch"):
-                config_path = resolve_config_path()
-                print(config_path)
+                config_path, exe_path = resolve_paths()
 
                 TerrainConfig(
                     XSize=width,
@@ -276,8 +275,9 @@ with left:
                     Scale=100.0,
                     ZMultiplier=7000.0,
                     UVScale=1.0,
-                    Heightmap=heightmap.tolist(),
-                    VegetationMap=forest_map.tolist(),
-                ).export_to_json("config.json")
+                    Heightmap=heightmap.reshape(-1).tolist(),
+                    VegetationMap=forest_map.reshape(-1).tolist(),
+                ).export_to_json(config_path)
 
-                # TODO: run executable here
+                if exe_path:
+                    subprocess.run(exe_path)
