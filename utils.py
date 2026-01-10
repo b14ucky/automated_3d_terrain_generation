@@ -30,8 +30,8 @@ class TerrainConfig:
     Heightmap: list[float]
     VegetationMap: list[int]
 
-    def export_to_json(self, filename: str = "config.json") -> None:
-        with open(filename, "w") as file:
+    def export_to_json(self, path: str | Path = "config.json") -> None:
+        with open(path, "w") as file:
             json.dump(asdict(self), file)
 
 
@@ -186,20 +186,26 @@ def generate_forest_adapted_to_terrain(
     return forest_map
 
 
-def resolve_config_path() -> Path:
+def resolve_paths() -> tuple[Path, Path | None]:
     """
-    Return the path to config.json based on whether the script is run from a
-    project directory (.uproject present) or an executable directory (.exe present).
+    Resolve runtime paths based on the execution context.
+
+    If a .uproject file is present, the script is assumed to run in development mode.
+    If a .exe is present, the script is assumed to run in production mode.
+
+    Returns:
+        tuple[Path, Path | None]:
+            - Path: Path to the project's config.json file.
+            - Path | None: Path to the built executable in production mode, or None in development mode.
     """
 
     base_dir = Path(__file__).resolve().parent
 
     uprojects = list(base_dir.glob("*.uproject"))
-
     if uprojects:
         project_dir = base_dir
 
-        return project_dir / "config.json"
+        return project_dir / "config.json", None
 
     exes = list(base_dir.glob("*.exe"))
     if exes:
@@ -207,6 +213,6 @@ def resolve_config_path() -> Path:
         project_name = exe_path.stem
         project_dir = base_dir / project_name
 
-        return project_dir / "config.json"
+        return project_dir / "config.json", exe_path
 
     raise RuntimeError(f".uproject nor .exe not found in {base_dir}")
