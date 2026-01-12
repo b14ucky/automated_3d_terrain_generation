@@ -38,9 +38,19 @@ with right:
     width_col, height_col = st.columns(2)
 
     with width_col:
-        width = st.number_input("Width", min_value=100, value=250)
+        width = st.number_input(
+            "Width",
+            min_value=100,
+            value=250,
+            help="Terrain width in units. Higher values create larger landscapes.",
+        )
     with height_col:
-        height = st.number_input("Height", min_value=100, value=250)
+        height = st.number_input(
+            "Height",
+            min_value=100,
+            value=250,
+            help="Terrain height in units. Higher values create larger landscapes.",
+        )
 
     # perlin noise settings section
     st.divider()
@@ -49,23 +59,53 @@ with right:
     pnoise_left, pnoise_right = st.columns(2)
 
     with pnoise_left:
-        scale = st.slider("Scale:", min_value=2.0, max_value=500.0, value=50.0)
-        octaves = st.slider("Octaves:", min_value=1, max_value=10, value=4)
+        scale = st.slider(
+            "Scale:",
+            min_value=2.0,
+            max_value=500.0,
+            value=50.0,
+            help="Controls the overall size of noise features. Larger values create bigger terrain variations.",
+        )
+        octaves = st.slider(
+            "Octaves:",
+            min_value=1,
+            max_value=10,
+            value=4,
+            help="Number of noise layers. More octaves add finer detail but increase processing time.",
+        )
 
     with pnoise_right:
         persistence = st.slider(
-            "Persistence:", min_value=0.01, max_value=1.0, value=0.5
+            "Persistence:",
+            min_value=0.01,
+            max_value=1.0,
+            value=0.5,
+            help="Controls how much each octave contributes. Higher values preserve detail at smaller scales.",
         )
         lacunarity = st.slider(
-            "Lacunarity:", min_value=0.01, max_value=10.0, value=2.0
+            "Lacunarity:",
+            min_value=0.01,
+            max_value=10.0,
+            value=2.0,
+            help="Frequency multiplier for each octave. Higher values create more varied terrain features.",
         )
 
     repeatx_col, repeaty_col, base_col = st.columns(3)
 
     with repeatx_col:
-        repeatx = st.number_input("Repeat x:", min_value=0.0, value=1024.0)
+        repeatx = st.number_input(
+            "Repeat x:",
+            min_value=0.0,
+            value=1024.0,
+            help="Horizontal repeat distance for seamless noise tiling.",
+        )
     with repeaty_col:
-        repeaty = st.number_input("Repeat y:", min_value=0.0, value=1024.0)
+        repeaty = st.number_input(
+            "Repeat y:",
+            min_value=0.0,
+            value=1024.0,
+            help="Vertical repeat distance for seamless noise tiling.",
+        )
     with base_col:
         base = st.number_input(
             "Base:",
@@ -95,7 +135,12 @@ with right:
     col_n, col_sel = st.columns([2, 1])
 
     with col_n:
-        mountain_num = st.number_input("Number of mountains:", min_value=0, step=1)
+        mountain_num = st.number_input(
+            "Number of mountains:",
+            min_value=0,
+            step=1,
+            help="Number of gaussian peaks to add to the terrain.",
+        )
 
     if "mountain_state" not in st.session_state:
         st.session_state.mountain_state = []
@@ -141,6 +186,7 @@ with right:
             key=f"x_mountain{active_idx}",
             on_change=update_mountain_state,
             args=(active_idx, "x", f"x_mountain{active_idx}"),
+            help="Horizontal position of the mountain peak.",
         )
 
         st.slider(
@@ -151,6 +197,7 @@ with right:
             key=f"y_mountain{active_idx}",
             on_change=update_mountain_state,
             args=(active_idx, "y", f"y_mountain{active_idx}"),
+            help="Vertical position of the mountain peak.",
         )
 
         st.slider(
@@ -161,6 +208,7 @@ with right:
             key=f"s_mountain{active_idx}",
             on_change=update_mountain_state,
             args=(active_idx, "sigma", f"s_mountain{active_idx}"),
+            help="Width of the mountain (standard deviation). Lower values create sharper peaks.",
         )
 
         st.slider(
@@ -171,6 +219,7 @@ with right:
             key=f"a_mountain{active_idx}",
             on_change=update_mountain_state,
             args=(active_idx, "amplitude", f"a_mountain{active_idx}"),
+            help="Height multiplier of the mountain peak. Higher values create taller mountains.",
         )
 
     mountains = (
@@ -190,15 +239,18 @@ with right:
             "Number of initial trees:",
             min_value=0,
             value=3,
+            help="Starting number of trees placed randomly on the terrain.",
         )
         space_between_trees = st.number_input(
             "Space between trees:",
             min_value=5,
+            help="Minimum distance required between tree centers to prevent overcrowding.",
         )
         n_iterations = st.number_input(
             "Number of iterations:",
             min_value=1,
             value=3,
+            help="Number of growth cycles for the forest expansion algorithm.",
         )
 
     with trees_rigth:
@@ -206,6 +258,7 @@ with right:
             "Seeding radius:",
             min_value=0,
             value=15,
+            help="Distance at which trees can spread seeds to new locations.",
         )
         seed_strength = st.number_input(
             "Seed strength:",
@@ -213,6 +266,7 @@ with right:
             max_value=1.00,
             value=0.05,
             step=0.01,
+            help="Probability of a seed growing into a new tree. Lower values = sparser forests.",
         )
         seed_decay_rate = st.number_input(
             "Seed decay rate:",
@@ -220,6 +274,7 @@ with right:
             max_value=1.00,
             value=0.2,
             step=0.01,
+            help="How quickly seed influence diminishes with distance. Higher values = more localized growth.",
         )
 
     forest_config = PyForestConfig(
