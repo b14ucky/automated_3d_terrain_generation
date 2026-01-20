@@ -259,7 +259,7 @@ with right:
     _, water_left, water_right = st.columns([0.5, 1, 3])
 
     with water_left:
-        water_on = st.toggle("Water", width="stretch")
+        water_on = st.toggle("Water", help="Enable water coverage on the terrain")
 
     with water_right:
         water_position = st.slider(
@@ -290,7 +290,7 @@ with right:
     _, fog_left, fog_center, fog_right = st.columns([0.5, 1, 2, 2])
 
     with fog_left:
-        fog_on = st.toggle("Fog")
+        fog_on = st.toggle("Fog", help="Enable fog effect in the scene")
 
     with fog_center:
         height_fog_offset = st.select_slider(
@@ -300,6 +300,7 @@ with right:
                 HeightFogOffset.NORMAL,
                 HeightFogOffset.HIGH,
             ],
+            help="Controls the vertical position of the fog. Low places fog closer to the ground, high places it higher up.",
         )
 
     with fog_right:
@@ -310,6 +311,7 @@ with right:
                 FogDensity.NORMAL,
                 FogDensity.HIGH,
             ],
+            help="Controls fog opacity. Higher values make the fog denser and more opaque.",
         )
 
 with left:
