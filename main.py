@@ -1,5 +1,6 @@
 import subprocess
 import numpy as np
+from enum import Enum
 import streamlit as st
 import matplotlib.cm as cm
 from PIL import Image, ImageDraw
@@ -13,6 +14,24 @@ from utils import (
     generate_heightmap,
     generate_forest_adapted_to_terrain,
 )
+
+
+# height fog offset (low - high) -0.1 -> -0.05 -> 0.0, fog density (low - hight) 0.1 -> 0.4 -> 1.0
+class BaseFogEnum(float, Enum):
+    def __str__(self) -> str:
+        return f"{self.name}".title()
+
+
+class FogDensity(BaseFogEnum):
+    LOW = 0.1
+    NORMAL = 0.4
+    HIGH = 1.0
+
+
+class HeightFogOffset(BaseFogEnum):
+    LOW = -0.1
+    NORMAL = -0.05
+    HIGH = 0.0
 
 
 st.set_page_config(page_title="Auto 3D Terrain Generator", layout="wide")
@@ -233,11 +252,76 @@ with right:
         space_between_trees=space_between_trees,
     )
 
+    # water settings section
+    st.divider()
+    st.write("Water settings")
+
+    _, water_left, water_right = st.columns([0.5, 1, 3])
+
+    with water_left:
+        water_on = st.toggle("Water", help="Enable water coverage on the terrain")
+
+    with water_right:
+        water_position = st.slider(
+            "Water level:",
+            min_value=0.2,
+            max_value=0.5,
+            step=0.01,
+            help="Determines the water level on the terrain. Higher values create more water coverage.",
+            disabled=not water_on,
+        )
+
+    default_water_position = 0.2
+    magic_water_level_multiplier = 1.75
+    final_water_position = (
+        (
+            1.0
+            - (water_position - default_water_position)
+            * magic_water_level_multiplier
+        )
+        if water_on
+        else 1
+    )
+
+    # fog settings section
+    st.divider()
+    st.write("Fog settings")
+
+    _, fog_left, fog_center, fog_right = st.columns([0.5, 1, 2, 2])
+
+    with fog_left:
+        fog_on = st.toggle("Fog", help="Enable fog effect in the scene")
+
+    with fog_center:
+        height_fog_offset = st.select_slider(
+            "Fog height offset:",
+            options=[
+                HeightFogOffset.LOW,
+                HeightFogOffset.NORMAL,
+                HeightFogOffset.HIGH,
+            ],
+            help="Controls the vertical position of the fog. Low places fog closer to the ground, high places it higher up.",
+        )
+
+    with fog_right:
+        fog_density = st.select_slider(
+            "Fog density:",
+            options=[
+                FogDensity.LOW,
+                FogDensity.NORMAL,
+                FogDensity.HIGH,
+            ],
+            help="Controls fog opacity. Higher values make the fog denser and more opaque.",
+        )
+
 with left:
     with st.spinner("Generating..."):
         heightmap = generate_heightmap(
             config=config, mountains=mountains, terrain_amplifier=0.7
         )
+
+        heightmap = heightmap * final_water_position if water_on else heightmap + 0.2
+
         forest_map = generate_forest_adapted_to_terrain(
             config=forest_config, heightmap=heightmap
         )
@@ -277,6 +361,10 @@ with left:
                     UVScale=1.0,
                     Heightmap=heightmap.reshape(-1).tolist(),
                     VegetationMap=forest_map.reshape(-1).tolist(),
+                    bWaterOn=water_on,
+                    bFogOn=fog_on,
+                    FogHeightOffset=height_fog_offset.value,
+                    FogDensity=fog_density.value,
                 ).export_to_json(config_path)
 
                 if exe_path:

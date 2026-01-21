@@ -29,6 +29,10 @@ class TerrainConfig:
     UVScale: float
     Heightmap: list[float]
     VegetationMap: list[int]
+    bWaterOn: bool
+    bFogOn: bool
+    FogHeightOffset: float
+    FogDensity: float
 
     def export_to_json(self, path: str | Path = "config.json") -> None:
         with open(path, "w") as file:
