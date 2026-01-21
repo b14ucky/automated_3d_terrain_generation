@@ -41,7 +41,7 @@ void AVegetationSpawner::SpawnVegetation(int32 XSize, int32 YSize, float Scale, 
 
 			FRotator RandomRotation = FRotator(0, FMath::FRandRange(0.0f, 360.0f), 0);
 
-			float Scale = FMath::FRandRange(0.6f, 1.0f);
+			float Scale = FMath::FRandRange(0.15f, 0.4f);
 			FVector RandomScale(Scale);
 
 			FTransform InstanceTransform(RandomRotation, Position, RandomScale);
