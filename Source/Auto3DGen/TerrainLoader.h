@@ -30,6 +30,21 @@ struct FTerrainConfig {
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<int32> VegetationMap;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bWaterOn;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float WaterHeight;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bFogOn;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float FogHeightOffset;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float FogDensity;
 };
 /**
  * 
