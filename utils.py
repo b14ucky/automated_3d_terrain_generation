@@ -30,6 +30,7 @@ class TerrainConfig:
     Heightmap: list[float]
     VegetationMap: list[int]
     bWaterOn: bool
+    WaterHeight: float
     bFogOn: bool
     FogHeightOffset: float
     FogDensity: float

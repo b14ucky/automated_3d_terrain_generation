@@ -396,6 +396,7 @@ with left:
                     Heightmap=st.session_state.heightmap.reshape(-1).tolist(),
                     VegetationMap=st.session_state.forest_map.reshape(-1).tolist(),
                     bWaterOn=water_on,
+                    WaterHeight=water_position,
                     bFogOn=fog_on,
                     FogHeightOffset=height_fog_offset.value,
                     FogDensity=fog_density.value,
