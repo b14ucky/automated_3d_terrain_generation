@@ -11,6 +11,7 @@ from utils import (
     TerrainConfig,
     PyForestConfig,
     PerlinNoiseConfig,
+    TerrainTransformConfig,
     generate_heightmap,
     generate_forest_adapted_to_terrain,
 )
@@ -107,6 +108,40 @@ with right:
         base=base,
     )
 
+    # General topology settings section
+    st.divider()
+    st.write("General topology settings")
+    topology_left, topology_right = st.columns(2)
+    with topology_left:
+        min_terrain_height, max_terrain_height = st.slider("Terrain height limits:", min_value=0, max_value=100, value=(0, 100),
+                help=(
+                "Limits the topology to given % limits of maximum height."
+            ),)
+        slope_x_begin = st.slider("Slope North->South start:", min_value=0.0, max_value=1.0, value=0.0, step=0.01,
+                help=(
+                "Creates a directional slope, can go down or up depending on start and end values."
+            ),)
+        slope_y_begin = st.slider("Slope West->East start:", min_value=0.0, max_value=1.0, value=0.0, step=0.01,
+                help=(
+                "Creates a directional slope, can go down or up depending on start and end values."
+            ),)
+    with topology_right:
+        terrain_flatness = st.slider("Terrain amplify (height/value):", min_value=0.1, max_value=10.0, value=1.0, step=0.1,
+                help=(
+                "Amplifies the differences or flattens the terrain"
+            ),)
+        slope_x_end = st.slider("Slope North->South end:", min_value=0.0, max_value=1.0, value=0.0, step=0.01)
+        slope_y_end = st.slider("Slope West->East end:", min_value=0.0, max_value=1.0, value=0.0, step=0.01)
+
+    transform = TerrainTransformConfig(
+        min_height=min_terrain_height/100,
+        max_height=max_terrain_height/100,
+        flatness=terrain_flatness,
+        slope_x_begin=slope_x_begin,
+        slope_x_end=slope_x_end,
+        slope_y_begin=slope_y_begin,
+        slope_y_end=slope_y_end,
+    )
     # mountains settings section
     st.divider()
     st.write("Mountains")
@@ -126,6 +161,7 @@ with right:
                 "y": height // 2,
                 "sigma": 10.0,
                 "amplitude": 1.0,
+                "hole": False,
             }
         )
 
@@ -191,6 +227,13 @@ with right:
             on_change=update_mountain_state,
             args=(active_idx, "amplitude", f"a_mountain{active_idx}"),
         )
+        st.checkbox(
+            "Invert:",
+            key=f"h_mountain{active_idx}",
+            on_change=update_mountain_state,
+            args=(active_idx, "hole", f"h_mountain{active_idx}"),
+            help="Turn the mountain into a hole"
+        )
 
     mountains = (
         [Mountain(**m) for m in st.session_state.mountain_state]
@@ -202,7 +245,7 @@ with right:
     st.divider()
     st.write("Forest settings")
 
-    trees_left, trees_rigth = st.columns(2)
+    trees_left, trees_right = st.columns(2)
 
     with trees_left:
         initial_trees = st.number_input(
@@ -219,8 +262,12 @@ with right:
             min_value=1,
             value=3,
         )
+        min_tree_height, max_tree_height = st.slider("Trees height limits:", min_value=0, max_value=100, value=(35, 60),
+                help=(
+                "Limits the tree spawn height to given % limits of maximum height."
+            ),)
 
-    with trees_rigth:
+    with trees_right:
         seed_radius = st.number_input(
             "Seeding radius:",
             min_value=0,
@@ -240,6 +287,10 @@ with right:
             value=0.2,
             step=0.01,
         )
+        tree_slope_value = st.slider("Tree max slope steepness:", min_value=0.0, max_value=10.0, value=0.7, step=0.1,
+                help=(
+                "Dictates how steep a slope can be for the trees to spawn, lower value means higher steepness"
+            ),)
 
     forest_config = PyForestConfig(
         width=width,
@@ -250,6 +301,9 @@ with right:
         seed_decay_rate=seed_decay_rate,
         n_iterations=n_iterations,
         space_between_trees=space_between_trees,
+        min_height = min_tree_height,
+        max_height = max_tree_height,
+        max_slope = tree_slope_value,
     )
 
     # water settings section
@@ -317,7 +371,7 @@ with right:
 with left:
     with st.spinner("Generating..."):
         heightmap = generate_heightmap(
-            config=config, mountains=mountains, terrain_amplifier=0.7
+            config=config, mountains=mountains, terrain_amplifier=0.7, transform=transform
         )
 
         heightmap = heightmap * final_water_position if water_on else heightmap + 0.2
