@@ -361,6 +361,10 @@ with left:
                     UVScale=1.0,
                     Heightmap=heightmap.reshape(-1).tolist(),
                     VegetationMap=forest_map.reshape(-1).tolist(),
+                    bWaterOn=water_on,
+                    bFogOn=fog_on,
+                    FogHeightOffset=height_fog_offset.value,
+                    FogDensity=fog_density.value,
                 ).export_to_json(config_path)
 
                 if exe_path:
