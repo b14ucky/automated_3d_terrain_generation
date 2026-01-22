@@ -28,6 +28,9 @@ void AVegetationSpawner::SpawnVegetation(int32 XSize, int32 YSize, float Scale, 
 		TreeISM->SetMaterial(0, TreeMaterial);
 	}
 
+	FBoxSphereBounds MeshBounds = TreeMesh->GetBounds();
+	float MeshOffsetToGround = MeshBounds.BoxExtent.Z - MeshBounds.Origin.Z;
+
 	for (int X = 0; X < XSize; ++X) {
 		for (int Y = 0; Y < YSize; ++Y) {
 			int index = Y * XSize + X;
@@ -35,14 +38,16 @@ void AVegetationSpawner::SpawnVegetation(int32 XSize, int32 YSize, float Scale, 
 			if (VegetationMap[index] != 2) continue;
 
 			float Z = Heightmap[index] * ZMultiplier;
-			Z -= 0.02f * ZMultiplier; // slight bury to avoid floating
 
 			FVector Position(X * Scale, Y * Scale, Z);
 
 			FRotator RandomRotation = FRotator(0, FMath::FRandRange(0.0f, 360.0f), 0);
 
-			float Scale = FMath::FRandRange(0.15f, 0.4f);
-			FVector RandomScale(Scale);
+			float InstanceScale = FMath::FRandRange(0.25f, 0.4f);
+			FVector RandomScale(InstanceScale);
+
+			Position.Z += MeshOffsetToGround * InstanceScale;
+			Position.Z -= 0.02f * ZMultiplier; // slight bury to avoid floating
 
 			FTransform InstanceTransform(RandomRotation, Position, RandomScale);
 			TreeISM->AddInstance(InstanceTransform);

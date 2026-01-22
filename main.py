@@ -17,25 +17,6 @@ from utils import (
     generate_forest_adapted_to_terrain,
 )
 
-
-# height fog offset (low - high) -0.1 -> -0.05 -> 0.0, fog density (low - hight) 0.1 -> 0.4 -> 1.0
-class BaseFogEnum(float, Enum):
-    def __str__(self) -> str:
-        return f"{self.name}".title()
-
-
-class FogDensity(BaseFogEnum):
-    LOW = 0.1
-    NORMAL = 0.4
-    HIGH = 1.0
-
-
-class HeightFogOffset(BaseFogEnum):
-    LOW = -0.1
-    NORMAL = -0.05
-    HIGH = 0.0
-
-
 st.set_page_config(page_title="Auto 3D Terrain Generator", layout="wide")
 left, right = st.columns([1, 2])
 
@@ -264,33 +245,23 @@ with right:
     st.divider()
     st.write("Fog settings")
 
-    _, fog_left, fog_center, fog_right = st.columns([0.5, 1, 2, 2])
+    _, fog_left, fog_right = st.columns([0.5, 1, 3])
 
     with fog_left:
         fog_on = st.toggle("Fog", help="Enable fog effect in the scene")
 
-    with fog_center:
-        height_fog_offset = st.select_slider(
-            "Fog height offset:",
-            options=[
-                HeightFogOffset.LOW,
-                HeightFogOffset.NORMAL,
-                HeightFogOffset.HIGH,
-            ],
-            help="Controls the vertical position of the fog. Low places fog closer to the ground, high places it higher up.",
-        )
-
     with fog_right:
-        fog_density = st.select_slider(
+        fog_density = st.slider(
             "Fog density:",
-            options=[
-                FogDensity.LOW,
-                FogDensity.NORMAL,
-                FogDensity.HIGH,
-            ],
+            min_value=0,
+            max_value=7,
+            value=1,
+            step=1,
             help="Controls fog opacity. Higher values make the fog denser and more opaque.",
+            disabled=not fog_on,
         )
 
+    final_fog_density = fog_density * 1000 - 1000
     # forest settings section
     st.divider()
     st.write("Forest settings")
@@ -446,8 +417,7 @@ with left:
                     bWaterOn=water_on,
                     WaterHeight=water_position,
                     bFogOn=fog_on,
-                    FogHeightOffset=height_fog_offset.value,
-                    FogDensity=fog_density.value,
+                    FogDensity=final_fog_density,
                 ).export_to_json(config_path)
 
                 if exe_path:

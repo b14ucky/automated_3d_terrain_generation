@@ -41,8 +41,7 @@ class TerrainConfig:
     bWaterOn: bool
     WaterHeight: float
     bFogOn: bool
-    FogHeightOffset: float
-    FogDensity: float
+    FogDensity: int
 
     def export_to_json(self, path: str | Path = "config.json") -> None:
         with open(path, "w") as file:
@@ -152,10 +151,9 @@ def generate_heightmap(
             tranformation_mask[i, j] = slope_x[i] + slope_y[j]
     terrain = terrain + tranformation_mask
     terrain = (terrain - terrain.min()) / (terrain.max() - terrain.min())
+    terrain = terrain/transform.flatness
     terrain[terrain < transform.min_height] = transform.min_height
     terrain[terrain > transform.max_height] = transform.max_height
-
-    terrain = terrain/transform.flatness
 
     if mask is not None:
         return terrain * (terrain_amplifier + mask * transform.flatness)
