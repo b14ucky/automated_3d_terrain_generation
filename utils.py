@@ -208,7 +208,7 @@ def generate_forest_adapted_to_terrain(
     slope = (slope - slope.min()) / (slope.max() - slope.min())
 
     forest_map[
-        (slope > PyForestConfig.max_slope) | (heightmap > PyForestConfig.max_height) | (heightmap < PyForestConfig.min_height)
+        (slope > config.max_slope) | (heightmap > config.max_height) | (heightmap < config.min_height)
     ] = VegetationType.EMPTY
     return forest_map
 
