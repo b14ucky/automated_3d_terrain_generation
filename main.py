@@ -309,6 +309,7 @@ with right:
             value=1,
             step=1,
             help="Controls fog opacity. Higher values make the fog denser and more opaque.",
+            disabled=not fog_on,
         )
 
     final_fog_density = fog_density * 1000 - 1000
