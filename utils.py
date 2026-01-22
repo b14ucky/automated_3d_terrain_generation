@@ -32,8 +32,7 @@ class TerrainConfig:
     bWaterOn: bool
     WaterHeight: float
     bFogOn: bool
-    FogHeightOffset: float
-    FogDensity: float
+    FogDensity: int
 
     def export_to_json(self, path: str | Path = "config.json") -> None:
         with open(path, "w") as file:
