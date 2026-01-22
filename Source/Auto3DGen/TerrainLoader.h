@@ -41,6 +41,9 @@ struct FTerrainConfig {
 	bool bFogOn;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float FogHeightOffset;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float FogDensity;
 };
 /**
