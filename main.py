@@ -365,6 +365,8 @@ with right:
     )
     st.session_state.forest_config = forest_config
 
+    final_fog_density = fog_density * 1000 - 1000
+
 with left:
     with st.spinner("Generating..."):
         heightmap = generate_heightmap(
