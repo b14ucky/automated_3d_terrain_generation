@@ -19,6 +19,15 @@ class PerlinNoiseConfig:
     repeaty: float = 1024.0
     base: int = 0
 
+@dataclass
+class TerrainTransformConfig:
+    max_height: float
+    min_height: float
+    flatness: float
+    slope_x_begin: float
+    slope_x_end: float
+    slope_y_begin: float
+    slope_y_end: float
 
 @dataclass
 class TerrainConfig:
@@ -49,6 +58,9 @@ class PyForestConfig:
     seed_decay_rate: float = 0.2
     n_iterations: int = 3
     space_between_trees: int = 5
+    min_height: float = 0.35,
+    max_height: float = 0.6,
+    max_slope: float = 0.7,
 
 
 @dataclass
@@ -56,6 +68,7 @@ class Mountain:
     x: int
     y: int
     sigma: float
+    hole: bool = False
     amplitude: float = 1.0
 
 
@@ -86,6 +99,7 @@ def gaussian_2d(
 
 def generate_heightmap(
     config: PerlinNoiseConfig,
+    transform: TerrainTransformConfig,
     mountains: list[Mountain] | None = None,
     terrain_amplifier: float = 0.5,
 ) -> NDArray:
@@ -111,14 +125,14 @@ def generate_heightmap(
                 (mountain.y, mountain.x),
                 mountain.sigma,
                 amplitude=mountain.amplitude,
-            )
+            ) * (1 + mountain.hole * -2)
 
         mask = (mask - mask.min()) / (mask.max() - mask.min())
 
     terrain = np.zeros((config.height, config.width))
     for i in range(config.height):
         for j in range(config.width):
-            terrain[i, j] = pnoise2(
+            terrain[i, j] =pnoise2(
                 i / config.scale,
                 j / config.scale,
                 octaves=config.octaves,
@@ -129,10 +143,20 @@ def generate_heightmap(
                 base=config.base,
             )
 
+    tranformation_mask = np.zeros((config.height, config.width))
+    slope_x = np.linspace(transform.slope_x_begin, transform.slope_x_end, config.width)
+    slope_y = np.linspace(transform.slope_y_begin, transform.slope_y_end, config.height)
+    for i in range(config.height):
+        for j in range(config.width):
+            tranformation_mask[i, j] = slope_x[i] + slope_y[j]
+    terrain = terrain + tranformation_mask
     terrain = (terrain - terrain.min()) / (terrain.max() - terrain.min())
+    terrain = terrain/transform.flatness
+    terrain[terrain < transform.min_height] = transform.min_height
+    terrain[terrain > transform.max_height] = transform.max_height
 
     if mask is not None:
-        return terrain * (terrain_amplifier + mask)
+        return terrain * (terrain_amplifier + mask * transform.flatness)
 
     return terrain
 
@@ -140,9 +164,6 @@ def generate_heightmap(
 def generate_forest_adapted_to_terrain(
     config: PyForestConfig,
     heightmap: NDArray,
-    min_height: float = 0.35,
-    max_height: float = 0.6,
-    max_slope: float = 0.7,
 ) -> NDArray:
     """
     Generates a forest distribution using the PyForest module and adapts it to the given terrain.
@@ -185,7 +206,7 @@ def generate_forest_adapted_to_terrain(
     slope = (slope - slope.min()) / (slope.max() - slope.min())
 
     forest_map[
-        (slope > max_slope) | (heightmap > max_height) | (heightmap < min_height)
+        (slope > config.max_slope) | (heightmap > config.max_height) | (heightmap < config.min_height)
     ] = VegetationType.EMPTY
     return forest_map
 

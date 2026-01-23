@@ -12,10 +12,10 @@ from utils import (
     TerrainConfig,
     PyForestConfig,
     PerlinNoiseConfig,
+    TerrainTransformConfig,
     generate_heightmap,
     generate_forest_adapted_to_terrain,
 )
-
 
 st.set_page_config(page_title="Auto 3D Terrain Generator", layout="wide")
 left, right = st.columns([1, 2])
@@ -90,6 +90,40 @@ with right:
         base=base,
     )
 
+    # General topology settings section
+    st.divider()
+    st.write("General topology settings")
+    topology_left, topology_right = st.columns(2)
+    with topology_left:
+        min_terrain_height, max_terrain_height = st.slider("Terrain height limits:", min_value=0, max_value=100, value=(0, 100),
+                help=(
+                "Limits the topology to given % limits of maximum height."
+            ),)
+        slope_x_begin = st.slider("Slope North->South start:", min_value=0.0, max_value=1.0, value=0.0, step=0.01,
+                help=(
+                "Creates a directional slope, can go down or up depending on start and end values."
+            ),)
+        slope_y_begin = st.slider("Slope West->East start:", min_value=0.0, max_value=1.0, value=0.0, step=0.01,
+                help=(
+                "Creates a directional slope, can go down or up depending on start and end values."
+            ),)
+    with topology_right:
+        terrain_flatness = st.slider("Terrain amplify (height/value):", min_value=0.1, max_value=10.0, value=1.0, step=0.1,
+                help=(
+                "Amplifies the differences or flattens the terrain"
+            ),)
+        slope_x_end = st.slider("Slope North->South end:", min_value=0.0, max_value=1.0, value=0.0, step=0.01)
+        slope_y_end = st.slider("Slope West->East end:", min_value=0.0, max_value=1.0, value=0.0, step=0.01)
+
+    transform = TerrainTransformConfig(
+        min_height=min_terrain_height/100,
+        max_height=max_terrain_height/100,
+        flatness=terrain_flatness,
+        slope_x_begin=slope_x_begin,
+        slope_x_end=slope_x_end,
+        slope_y_begin=slope_y_begin,
+        slope_y_end=slope_y_end,
+    )
     # mountains settings section
     st.divider()
     st.write("Mountains")
@@ -109,6 +143,7 @@ with right:
                 "y": height // 2,
                 "sigma": 10.0,
                 "amplitude": 1.0,
+                "hole": False,
             }
         )
 
@@ -174,18 +209,64 @@ with right:
             on_change=update_mountain_state,
             args=(active_idx, "amplitude", f"a_mountain{active_idx}"),
         )
+        st.checkbox(
+            "Invert:",
+            key=f"h_mountain{active_idx}",
+            on_change=update_mountain_state,
+            args=(active_idx, "hole", f"h_mountain{active_idx}"),
+            help="Turn the mountain into a hole"
+        )
 
     mountains = (
         [Mountain(**m) for m in st.session_state.mountain_state]
         if "mountain_state" in st.session_state
         else None
     )
+    # water settings section
+    st.divider()
+    st.write("Water settings")
 
+    _, water_left, water_right = st.columns([0.5, 1, 3])
+
+    with water_left:
+        water_on = st.toggle("Water", help="Enable water coverage on the terrain")
+
+    with water_right:
+        water_position = st.slider(
+            "Water level:",
+            min_value=0.2,
+            max_value=0.5,
+            step=0.01,
+            help="Determines the water level on the terrain. Higher values create more water coverage.",
+            disabled=not water_on,
+        )
+
+    # fog settings section
+    st.divider()
+    st.write("Fog settings")
+
+    _, fog_left, fog_right = st.columns([0.5, 1, 3])
+
+    with fog_left:
+        fog_on = st.toggle("Fog", help="Enable fog effect in the scene")
+
+    with fog_right:
+        fog_density = st.slider(
+            "Fog density:",
+            min_value=0,
+            max_value=7,
+            value=1,
+            step=1,
+            help="Controls fog opacity. Higher values make the fog denser and more opaque.",
+            disabled=not fog_on,
+        )
+
+    final_fog_density = fog_density * 1000 - 1000
     # forest settings section
     st.divider()
     st.write("Forest settings")
 
-    trees_left, trees_rigth = st.columns(2)
+    trees_left, trees_right = st.columns(2)
 
     if "forest_config" not in st.session_state:
         st.session_state.forest_config = PyForestConfig(
@@ -200,11 +281,11 @@ with right:
             forest_config_dict[key] = st.session_state[key]
             st.session_state.forest_config = PyForestConfig(**forest_config_dict)
 
-        # if "heightmap" in st.session_state:
-        st.session_state.forest_map = generate_forest_adapted_to_terrain(
-            config=st.session_state.forest_config,
-            heightmap=st.session_state.heightmap,
-        )
+        if "heightmap" in st.session_state:
+            st.session_state.forest_map = generate_forest_adapted_to_terrain(
+                config=st.session_state.forest_config,
+                heightmap=st.session_state.heightmap,
+            )
 
     with trees_left:
         initial_trees = st.number_input(
@@ -230,8 +311,12 @@ with right:
             on_change=update_forest,
             args=("n_iterations",),
         )
+        min_tree_height, max_tree_height = st.slider("Trees height limits:", min_value=0, max_value=100, value=(35, 60), on_change=update_forest,
+                help=(
+                "Limits the tree spawn height to given % limits of maximum height."
+            ),)
 
-    with trees_rigth:
+    with trees_right:
         seed_radius = st.number_input(
             "Seeding radius:",
             min_value=0,
@@ -260,71 +345,34 @@ with right:
             on_change=update_forest,
             args=("seed_decay_rate",),
         )
+        tree_slope_value = st.slider("Tree max slope steepness:", min_value=0.0, max_value=10.0, value=0.7, step=0.1, on_change=update_forest,
+                help=(
+                "Dictates how steep a slope can be for the trees to spawn, lower value means higher steepness"
+            ),)
 
-    # water settings section
-    st.divider()
-    st.write("Water settings")
-
-    _, water_left, water_right = st.columns([0.5, 1, 3])
-
-    with water_left:
-        water_on = st.toggle("Water", help="Enable water coverage on the terrain")
-
-    with water_right:
-        water_position = st.slider(
-            "Water level:",
-            min_value=0.2,
-            max_value=0.5,
-            step=0.01,
-            help="Determines the water level on the terrain. Higher values create more water coverage.",
-            disabled=not water_on,
-        )
-
-    default_water_position = 0.2
-    magic_water_level_multiplier = 1.75
-    final_water_position = (
-        (
-            1.0
-            - (water_position - default_water_position)
-            * magic_water_level_multiplier
-        )
-        if water_on
-        else 1
+    forest_config = PyForestConfig(
+        width=width,
+        height=height,
+        initial_trees=initial_trees,
+        seed_radius=seed_radius,
+        seed_strength=seed_strength,
+        seed_decay_rate=seed_decay_rate,
+        n_iterations=n_iterations,
+        space_between_trees=space_between_trees,
+        min_height = max(min_tree_height/100, water_position),
+        max_height = max_tree_height/100,
+        max_slope = tree_slope_value,
     )
-
-    # fog settings section
-    st.divider()
-    st.write("Fog settings")
-
-    _, fog_left, fog_right = st.columns([0.5, 1, 3])
-
-    with fog_left:
-        fog_on = st.toggle("Fog", help="Enable fog effect in the scene")
-
-    with fog_right:
-        fog_density = st.slider(
-            "Fog density:",
-            min_value=0,
-            max_value=7,
-            value=1,
-            step=1,
-            help="Controls fog opacity. Higher values make the fog denser and more opaque.",
-            disabled=not fog_on,
-        )
+    st.session_state.forest_config = forest_config
 
     final_fog_density = fog_density * 1000 - 1000
 
 with left:
     with st.spinner("Generating..."):
-        st.session_state.heightmap = generate_heightmap(
-            config=config, mountains=mountains, terrain_amplifier=0.7
+        heightmap = generate_heightmap(
+            config=config, mountains=mountains, terrain_amplifier=0.7, transform=transform
         )
-
-        st.session_state.heightmap = (
-            st.session_state.heightmap * final_water_position
-            if water_on
-            else st.session_state.heightmap + 0.2
-        )
+        st.session_state.heightmap = heightmap
 
         if "forest_map" not in st.session_state:
             st.session_state.forest_map = generate_forest_adapted_to_terrain(
